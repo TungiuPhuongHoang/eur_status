@@ -1,63 +1,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Live Offers Poll (Dev Only)</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="utf-8">
+    <title>Live Offers Poll (with Luxon adapter)</title>
+    <!-- Chart.js core -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Luxon (for date handling) -->
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+    <!-- Chart.js adapter for Luxon -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
 </head>
 <body>
-<h2>Offer Response Over Time (Dev CORS Hack)</h2>
+<h2>Offer Response Over Time</h2>
 <canvas id="liveChart" width="800" height="400"></canvas>
 
 <script>
-  // PREFIX with CORS Anywhere demo proxy
-  const URL = "https://cors-anywhere.herokuapp.com/https://payment.flywire.com/payex/offers";
-  const BODY = {
-    amount: 1200000,
-    country: "VN",
-    recipient: "FKW",
-    fingerprint: "rB/L4mgUx7JJIQARAxedAg==",
-    locale: "en"
-  };
-  const HEADERS = {
-    "Content-Type": "application/json",
-    "Accept": "application/json"
-  };
+    const URL = "https://cors-anywhere.herokuapp.com/https://payment.flywire.com/payex/offers";
+    const BODY = {
+        amount: 1200000,
+        country: "VN",
+        recipient: "FKW",
+        fingerprint: "rB/L4mgUx7JJIQARAxedAg==",
+        locale: "en"
+    };
+    const HEADERS = {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    };
 
-  const ctx = document.getElementById("liveChart").getContext("2d");
-  const chart = new Chart(ctx, {
-    type: "line",
-    data: { labels: [], datasets: [{ label: "yourValueKey", data: [], fill: false }] },
-    options: {
-      scales: {
-        x: { type: "time", time: { tooltipFormat: "HH:mm:ss" } }
-      }
+    const ctx = document.getElementById("liveChart").getContext("2d");
+    const chart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                label: "yourValueKey",
+                data: [],
+                fill: false
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: "time",           // ← needs the adapter!
+                    time: {tooltipFormat: "HH:mm:ss"}
+                }
+            }
+        }
+    });
+
+    async function fetchData() {
+        try {
+            const resp = await fetch(URL, {
+                method: "POST",
+                headers: HEADERS,
+                body: JSON.stringify(BODY)
+            });
+            const json = await resp.json();
+            const value = json.yourValueKey;  // adjust this
+            chart.data.labels.push(Date.now());
+            chart.data.datasets[0].data.push(value);
+            chart.update();
+        } catch (err) {
+            console.error("Polling error:", err);
+        }
     }
-  });
 
-  async function fetchData() {
-    try {
-      const resp = await fetch(URL, {
-        method: "POST",
-        headers: HEADERS,
-        body: JSON.stringify(BODY)
-      });
-      const json = await resp.json();
-      // replace "yourValueKey" with the actual field you want to chart:
-      const value = json.yourValueKey;
-      const now   = Date.now();
-
-      chart.data.labels.push(now);
-      chart.data.datasets[0].data.push(value);
-      chart.update();
-    } catch (err) {
-      console.error("Polling error:", err);
-    }
-  }
-
-  // kick it off immediately, then every 5s
-  fetchData();
-  setInterval(fetchData, 5000);
+    fetchData();
+    setInterval(fetchData, 5000);
 </script>
 </body>
 </html>
