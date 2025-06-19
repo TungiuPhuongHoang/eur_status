@@ -56,8 +56,8 @@
     // Load saved chart data from localStorage
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      const { labels, data_pre } = JSON.parse(saved);
-      let data = data_pre/10;
+      const { labels, data: rawData } = JSON.parse(saved);
+      const data = rawData.map(d => d / 10);
       chart.data.labels = labels;
       chart.data.datasets[0].data = data;
       chart.update();
