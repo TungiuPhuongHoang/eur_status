@@ -17,18 +17,7 @@
 <canvas id="liveChart" width="800" height="400"></canvas>
 
 <script>
-    const URL = "https://payment.flywire.com/payex/offers";
-    const BODY = {
-        amount: 1200000,
-        country: "VN",
-        recipient: "FKW",
-        fingerprint: "rB/L4mgUx7JJIQARAxedAg==",
-        locale: "en"
-    };
-    const HEADERS = {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    };
+    const URL = "https://flywire-poller.tungiuphuong.workers.dev/data";
     const STORAGE_KEY = 'chartData';
 
     // Utility to format number with thousand separators and VND suffix
@@ -80,28 +69,20 @@
 
     async function fetchData() {
         try {
-            const resp = await fetch(URL, {
-                method: "POST",
-                headers: HEADERS,
-                body: JSON.stringify(BODY)
-            });
-            const json = await resp.json();
-            const value = json.single[0].price.value/10;
-            chart.data.labels.push(Date.now());
-            chart.data.datasets[0].data.push(value);
-            // Trim data older than one week (7 days)
-            const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-            while (chart.data.labels.length && chart.data.labels[0] < oneWeekAgo) {
-                chart.data.labels.shift();
-                chart.data.datasets[0].data.shift();
-            }
+            const resp = await fetch(URL);
+            const history = await resp.json();            // array of {t: timestamp, v: value}
+            // Map history into chart data
+            chart.data.labels = history.map(pt => pt.t);
+            chart.data.datasets[0].data = history.map(pt => pt.v);
             chart.update();
-            document.getElementById("currentPrice").innerText = formatVND(value);
-            document.getElementById("conversionRate").innerText = formatNumber(value / 12025);
+            // Update current price & conversion from last entry
+            const last = history[history.length - 1]?.v || 0;
+            document.getElementById("currentPrice").innerText = formatVND(last);
+            document.getElementById("conversionRate").innerText = formatNumber(last / 12025);
             // Persist updated chart data
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
               labels: chart.data.labels,
-              data: chart.data.datasets[0].data
+              data:   chart.data.datasets[0].data
             }));
         } catch (err) {
             console.error("Polling error:", err);
