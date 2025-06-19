@@ -30,6 +30,11 @@
     };
     const STORAGE_KEY = 'chartData';
 
+    // Utility to format number with thousand separators and VND suffix
+    function formatVND(amount) {
+      return new Intl.NumberFormat('en-US').format(amount) + ' VND';
+    }
+
     const ctx = document.getElementById("liveChart").getContext("2d");
     const chart = new Chart(ctx, {
         type: "line",
@@ -58,7 +63,7 @@
       chart.data.datasets[0].data = data;
       chart.update();
       if (data.length) {
-        document.getElementById("currentPrice").innerText = data[data.length - 1];
+        document.getElementById("currentPrice").innerText = formatVND(data[data.length - 1]);
       }
     }
 
@@ -80,7 +85,7 @@
                 chart.data.datasets[0].data.shift();
             }
             chart.update();
-            document.getElementById("currentPrice").innerText = value;
+            document.getElementById("currentPrice").innerText = formatVND(value);
             // Persist updated chart data
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
               labels: chart.data.labels,
