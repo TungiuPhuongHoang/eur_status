@@ -12,6 +12,7 @@
 </head>
 <body>
 <h2>Offer Response Over Time</h2>
+<p>Current Price: <span id="currentPrice">-</span></p>
 <canvas id="liveChart" width="800" height="400"></canvas>
 
 <script>
@@ -57,10 +58,11 @@
                 body: JSON.stringify(BODY)
             });
             const json = await resp.json();
-            const value = json.single[0].price.value;
+            const value = json.single[0].price.value/10;
             chart.data.labels.push(Date.now());
             chart.data.datasets[0].data.push(value);
             chart.update();
+            document.getElementById("currentPrice").innerText = value;
         } catch (err) {
             console.error("Polling error:", err);
         }
