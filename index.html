@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Live Offers Poll (with Luxon adapter)</title>
+    <title>Live EUR rate status</title>
     <!-- Chart.js core -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Luxon (for date handling) -->
@@ -13,6 +13,7 @@
 <body>
 <h2>Offer Response Over Time</h2>
 <p>Current Price: <span id="currentPrice">-</span></p>
+<p>1 EUR = <span id="conversionRate">-</span></p>
 <canvas id="liveChart" width="800" height="400"></canvas>
 
 <script>
@@ -33,6 +34,14 @@
     // Utility to format number with thousand separators and VND suffix
     function formatVND(amount) {
       return new Intl.NumberFormat('en-US').format(amount) + ' VND';
+    }
+
+    // Utility to format numbers with no decimal places
+    function formatNumber(num) {
+      return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(num);
     }
 
     const ctx = document.getElementById("liveChart").getContext("2d");
@@ -63,7 +72,9 @@
       chart.data.datasets[0].data = data;
       chart.update();
       if (data.length) {
-        document.getElementById("currentPrice").innerText = formatVND(data[data.length - 1]);
+        const last = data[data.length - 1];
+        document.getElementById("currentPrice").innerText = formatVND(last);
+        document.getElementById("conversionRate").innerText = formatNumber(last / 12025);
       }
     }
 
@@ -86,6 +97,7 @@
             }
             chart.update();
             document.getElementById("currentPrice").innerText = formatVND(value);
+            document.getElementById("conversionRate").innerText = formatNumber(value / 12025);
             // Persist updated chart data
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
               labels: chart.data.labels,
