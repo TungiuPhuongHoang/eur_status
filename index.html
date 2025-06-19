@@ -74,11 +74,10 @@
             const history = await resp.json();            // array of {t: timestamp, v: value}
             // Map history into chart data
             chart.data.labels = history.map(pt => pt.t);
-            chart.data.datasets[0].data = history.map(pt => pt.v);
+            chart.data.datasets[0].data = history.map(pt => pt.v/10);
             chart.update();
             // Update current price & conversion from last entry
-            const last = history[history.length - 1]?.v || 0;
-            document.getElementById("currentPrice").innerText = formatVND(last);
+            const last = (history[history.length - 1]?.v ?? 0) / 10;            document.getElementById("currentPrice").innerText = formatVND(last);
             document.getElementById("conversionRate").innerText = formatNumber(last / 12025);
             // Persist updated chart data
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
