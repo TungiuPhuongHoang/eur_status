@@ -34,7 +34,7 @@
         data: {
             labels: [],
             datasets: [{
-                label: "yourValueKey",
+                label: "Price Value",
                 data: [],
                 fill: false
             }]
@@ -57,7 +57,7 @@
                 body: JSON.stringify(BODY)
             });
             const json = await resp.json();
-            const value = json.yourValueKey;  // adjust this
+            const value = json.single[0].price.value;
             chart.data.labels.push(Date.now());
             chart.data.datasets[0].data.push(value);
             chart.update();
@@ -67,7 +67,7 @@
     }
 
     fetchData();
-    setInterval(fetchData, 5000);
+    setInterval(fetchData, 60000);
 </script>
 </body>
 </html>
