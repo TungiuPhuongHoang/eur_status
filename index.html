@@ -28,6 +28,7 @@
         "Content-Type": "application/json",
         "Accept": "application/json"
     };
+    const STORAGE_KEY = 'chartData';
 
     const ctx = document.getElementById("liveChart").getContext("2d");
     const chart = new Chart(ctx, {
@@ -49,6 +50,17 @@
             }
         }
     });
+    // Load saved chart data from localStorage
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const { labels, data } = JSON.parse(saved);
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = data;
+      chart.update();
+      if (data.length) {
+        document.getElementById("currentPrice").innerText = data[data.length - 1];
+      }
+    }
 
     async function fetchData() {
         try {
@@ -61,15 +73,26 @@
             const value = json.single[0].price.value/10;
             chart.data.labels.push(Date.now());
             chart.data.datasets[0].data.push(value);
+            // Trim data older than one week (7 days)
+            const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+            while (chart.data.labels.length && chart.data.labels[0] < oneWeekAgo) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
             chart.update();
             document.getElementById("currentPrice").innerText = value;
+            // Persist updated chart data
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+              labels: chart.data.labels,
+              data: chart.data.datasets[0].data
+            }));
         } catch (err) {
             console.error("Polling error:", err);
         }
     }
 
     fetchData();
-    setInterval(fetchData, 60000);
+    setInterval(fetchData, 30000);
 </script>
 </body>
 </html>
