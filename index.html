@@ -52,9 +52,10 @@
         options: {
             plugins: {
                 zoom: {
-                    pan: { enabled: true, mode: 'x', threshold: 10 },
+                    pan: { enabled: true, mode: 'x', threshold: 5 },
                     zoom: {
-                        wheel: { enabled: true },
+                        // Disable wheel/trackpad zoom so two‑finger scroll pans instead
+                        wheel: { enabled: false },
                         pinch: { enabled: true },
                         drag: { enabled: false },
                         mode: 'x'
