@@ -34,6 +34,9 @@
       }).format(num);
     }
 
+    // Ensure zoom plugin is registered
+    Chart.register(ChartZoom);
+
 
     const ctx = document.getElementById("liveChart").getContext("2d");
     const chart = new Chart(ctx, {
