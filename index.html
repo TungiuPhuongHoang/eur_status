@@ -34,8 +34,6 @@
       }).format(num);
     }
 
-    // Register zoom & pan plugin
-    Chart.register(ChartZoom);
 
     const ctx = document.getElementById("liveChart").getContext("2d");
     const chart = new Chart(ctx, {
