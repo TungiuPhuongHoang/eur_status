@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
     <!-- Chart.js adapter for Luxon -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 </head>
 <body>
 <h2>Price status</h2>
@@ -33,6 +34,9 @@
       }).format(num);
     }
 
+    // Register zoom & pan plugin
+    Chart.register(ChartZoom);
+
     const ctx = document.getElementById("liveChart").getContext("2d");
     const chart = new Chart(ctx, {
         type: "line",
@@ -45,6 +49,16 @@
             }]
         },
         options: {
+            plugins: {
+                zoom: {
+                    pan: { enabled: true, mode: 'x' },
+                    zoom: {
+                        wheel: { enabled: true },
+                        pinch: { enabled: true },
+                        mode: 'x'
+                    }
+                }
+            },
             scales: {
                 x: {
                     type: "time",           // ← needs the adapter!
