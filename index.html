@@ -13,6 +13,12 @@
 </head>
 <body>
 <h2>Price status</h2>
+<div id="rangeButtons" style="margin-bottom:8px;">
+    <button data-range="1h">1H</button>
+    <button data-range="12h">12H</button>
+    <button data-range="1d">1D</button>
+    <button data-range="5d">5D</button>
+</div>
 <p>Current Price: <span id="currentPrice">-</span></p>
 <p>1 EUR = <span id="conversionRate">-</span></p>
 <canvas id="liveChart" width="800" height="400"></canvas>
@@ -20,6 +26,16 @@
 <script>
     const URL = "https://flywire-poller.tungiuphuong.workers.dev/data";
     const STORAGE_KEY = 'chartData';
+
+    // Time‑range options in milliseconds
+    const RANGES = {
+      '1h': 60 * 60 * 1000,
+      '12h': 12 * 60 * 60 * 1000,
+      '1d': 24 * 60 * 60 * 1000,
+      '5d': 5 * 24 * 60 * 60 * 1000
+    };
+    let currentRange = '1d';          // default view
+    let fullHistory = [];             // master data from the Worker
 
     // Utility to format number with thousand separators and VND suffix
     function formatVND(amount) {
@@ -37,6 +53,19 @@
     // Ensure zoom plugin is registered
     Chart.register(ChartZoom);
 
+    function refreshChart() {
+      const cutoff = Date.now() - RANGES[currentRange];
+      const filtered = fullHistory.filter(pt => pt.t >= cutoff);
+      chart.data.labels = filtered.map(pt => pt.t);
+      chart.data.datasets[0].data = filtered.map(pt => pt.v / 10);
+      chart.update();
+
+      if (filtered.length) {
+        const last = filtered[filtered.length - 1].v / 10;
+        document.getElementById("currentPrice").innerText = formatVND(last);
+        document.getElementById("conversionRate").innerText = formatNumber(last / 12025);
+      }
+    }
 
     const ctx = document.getElementById("liveChart").getContext("2d");
     const chart = new Chart(ctx, {
@@ -46,7 +75,9 @@
             datasets: [{
                 label: "Price Value",
                 data: [],
-                fill: false
+                fill: { target: 'origin' },
+                backgroundColor: 'rgba(0,200,0,0.15)',
+                borderColor: 'rgba(0,200,0,1)'
             }]
         },
         options: {
@@ -89,13 +120,8 @@
         try {
             const resp = await fetch(URL);
             const history = await resp.json();            // array of {t: timestamp, v: value}
-            // Map history into chart data
-            chart.data.labels = history.map(pt => pt.t);
-            chart.data.datasets[0].data = history.map(pt => pt.v/10);
-            chart.update();
-            // Update current price & conversion from last entry
-            const last = (history[history.length - 1]?.v ?? 0) / 10;            document.getElementById("currentPrice").innerText = formatVND(last);
-            document.getElementById("conversionRate").innerText = formatNumber(last / 12025);
+            fullHistory = history;   // save full set
+            refreshChart();
             // Persist updated chart data
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
               labels: chart.data.labels,
@@ -105,6 +131,13 @@
             console.error("Polling error:", err);
         }
     }
+
+    document.querySelectorAll('#rangeButtons button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentRange = btn.getAttribute('data-range');
+        refreshChart();
+      });
+    });
 
     fetchData();
     setInterval(fetchData, 120000);
